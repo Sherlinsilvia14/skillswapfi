@@ -1,0 +1,251 @@
+.quizzes-page, .quiz-taking, .quiz-result {
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.quizzes-header {
+  margin-bottom: 32px;
+}
+
+.quizzes-header h1 {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.quizzes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.quiz-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
+}
+
+.quiz-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+.quiz-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.quiz-card-header h3 {
+  font-size: 20px;
+  flex: 1;
+}
+
+.difficulty-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.difficulty-badge.beginner {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.difficulty-badge.intermediate {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.difficulty-badge.advanced {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+.quiz-card-body {
+  margin-bottom: 20px;
+}
+
+.quiz-skill {
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.quiz-info {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.quiz-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.quiz-progress {
+  margin-bottom: 32px;
+}
+
+.quiz-progress p {
+  text-align: center;
+  margin-top: 12px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.question-card {
+  background: white;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 24px;
+}
+
+.question-card h3 {
+  font-size: 24px;
+  margin-bottom: 32px;
+  line-height: 1.4;
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.option-btn {
+  width: 100%;
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.option-btn:hover {
+  border-color: var(--primary-color);
+  background: var(--primary-color)10;
+}
+
+.option-btn.selected {
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+  color: white;
+}
+
+.option-letter {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: white;
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.option-btn.selected .option-letter {
+  background: white;
+  color: var(--primary-color);
+}
+
+.quiz-navigation {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.quiz-navigation .btn {
+  flex: 1;
+}
+
+.result-card {
+  max-width: 600px;
+  margin: 0 auto;
+  background: white;
+  padding: 48px;
+  border-radius: 16px;
+  box-shadow: var(--shadow-xl);
+  text-align: center;
+}
+
+.result-icon {
+  font-size: 80px;
+  margin-bottom: 24px;
+}
+
+.result-icon.passed {
+  animation: bounce 0.5s ease;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.result-card h1 {
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.result-message {
+  font-size: 18px;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+}
+
+.result-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.result-stat {
+  padding: 24px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+}
+
+.result-stat h2 {
+  font-size: 48px;
+  color: var(--primary-color);
+  margin-bottom: 8px;
+}
+
+.result-stat p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .quizzes-page, .quiz-taking, .quiz-result {
+    padding: 20px 16px;
+  }
+
+  .quizzes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .result-card {
+    padding: 32px 24px;
+  }
+}

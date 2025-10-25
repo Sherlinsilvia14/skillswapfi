@@ -1,0 +1,320 @@
+.onboarding-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px 20px;
+}
+
+.onboarding-progress {
+  max-width: 800px;
+  margin: 0 auto 40px;
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #E5E7EB;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  transition: width 0.5s ease;
+  border-radius: 4px;
+}
+
+.progress-steps {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.step {
+  flex: 1;
+  height: 48px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #E5E7EB;
+  color: #6B7280;
+  font-weight: 600;
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+.step.active {
+  background: var(--primary-color);
+  color: white;
+  transform: scale(1.05);
+}
+
+.step.completed {
+  background: var(--secondary-color);
+  color: white;
+}
+
+.onboarding-content {
+  max-width: 900px;
+  margin: 0 auto;
+  background: white;
+  padding: 48px;
+  border-radius: 16px;
+  box-shadow: var(--shadow-xl);
+}
+
+.onboarding-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.onboarding-header h1 {
+  font-size: 36px;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.onboarding-header p {
+  font-size: 18px;
+  color: var(--text-secondary);
+}
+
+.skills-section {
+  margin-bottom: 40px;
+}
+
+.skills-section h3 {
+  font-size: 20px;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.skill-btn {
+  padding: 12px 20px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  background: white;
+  color: var(--text-primary);
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.skill-btn:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+}
+
+.skill-btn.selected {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.custom-skill-section {
+  margin-bottom: 40px;
+}
+
+.custom-skill-section h3 {
+  font-size: 20px;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.custom-skill-input {
+  display: flex;
+  gap: 12px;
+}
+
+.custom-skill-input input {
+  flex: 1;
+}
+
+.selected-skills {
+  margin-bottom: 40px;
+  padding: 24px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+}
+
+.selected-skills h4 {
+  font-size: 18px;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.selected-skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.selected-skill-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: white;
+  border: 2px solid var(--primary-color);
+  border-radius: 20px;
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.selected-skill-tag button {
+  background: none;
+  color: var(--primary-color);
+  font-size: 20px;
+  line-height: 1;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.schedule-section {
+  margin-bottom: 40px;
+}
+
+.schedule-section h3 {
+  font-size: 20px;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.schedule-btn {
+  padding: 20px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  background: white;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.schedule-btn:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+}
+
+.schedule-btn.selected {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.schedule-icon {
+  font-size: 24px;
+}
+
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
+}
+
+.day-btn {
+  padding: 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  background: white;
+  color: var(--text-primary);
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.day-btn:hover {
+  border-color: var(--primary-color);
+}
+
+.day-btn.selected {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.schedule-summary {
+  margin-bottom: 40px;
+  padding: 24px;
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border-radius: 12px;
+  border: 2px solid var(--primary-light);
+}
+
+.schedule-summary h4 {
+  font-size: 18px;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.summary-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary-item {
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.summary-item strong {
+  color: var(--primary-color);
+  margin-right: 8px;
+}
+
+.onboarding-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 40px;
+}
+
+.onboarding-actions .btn {
+  flex: 1;
+  padding: 14px;
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .onboarding-content {
+    padding: 32px 24px;
+  }
+
+  .onboarding-header h1 {
+    font-size: 28px;
+  }
+
+  .skills-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  .schedule-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .days-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
