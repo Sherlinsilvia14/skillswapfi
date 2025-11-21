@@ -14,6 +14,12 @@ import courseRoutes from './routes/courseRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import Message from './models/Message.js';
 import User from './models/User.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// __dirname replacement for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load env vars
 dotenv.config();
@@ -46,6 +52,12 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/notifications', notificationRoutes);
+
+app.use(express.static(path.join(__dirname, "build")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "build", "index.html"));
+});
 
 // Root route
 app.get('/', (req, res) => {
