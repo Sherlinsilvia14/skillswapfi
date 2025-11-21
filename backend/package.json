@@ -5,7 +5,8 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
+     "start": "node server.js",
+  "build-frontend": "cd ../frontend && npm install && npm run build && cp -r build ../backend/" ,
     "dev": "nodemon server.js",
     "seed": "node seedData.js",
     "clear-user": "node clearUser.js"

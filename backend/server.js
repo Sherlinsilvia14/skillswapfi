@@ -1,3 +1,4 @@
+// backend/server.js
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -15,36 +16,37 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import Message from './models/Message.js';
 import User from './models/User.js';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
-// __dirname replacement for ES modules
+// __dirname for ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load env vars
+// Load environment variables
 dotenv.config();
 
-// Connect to database
+// Connect to MongoDB
 connectDB();
 
 const app = express();
 const httpServer = createServer(app);
 
-// Socket.IO setup
+// ⚡ Socket.IO setup
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    methods: ['GET', 'POST']
+    origin: process.env.FRONTEND_URL || "*",
+    methods: ["GET", "POST"],
   }
 });
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '50mb' })); // Increased limit for image uploads
-app.use(express.urlencoded({ extended: true, limit: '50mb' })); // Increased limit for image uploads
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(morgan('dev'));
 
-// Routes
+// ========== API Routes ==========
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/sessions', sessionRoutes);
@@ -53,235 +55,113 @@ app.use('/api/quizzes', quizRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/notifications', notificationRoutes);
 
-app.use(express.static(path.join(__dirname, "build")));
-
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "build", "index.html"));
+// Health route
+app.get('/health', (req, res) => {
+  res.json({ message: "SkillSwap API Running", version: "1.0.0" });
 });
 
-// Root route
-app.get('/', (req, res) => {
-  res.json({
-    message: 'SkillSwap API',
-    version: '1.0.0',
-    status: 'Running'
+// ====================== SERVE REACT FRONTEND ======================
+
+// FRONTEND BUILD SHOULD BE INSIDE: backend/build
+const FRONTEND_PATH = path.join(__dirname, "build");
+
+if (fs.existsSync(FRONTEND_PATH)) {
+  console.log("✅ React build found. Serving frontend...");
+
+  app.use(express.static(FRONTEND_PATH));
+
+  // Send index.html for non-API routes
+  app.get("*", (req, res) => {
+    if (req.path.startsWith("/api")) return;
+    res.sendFile(path.join(FRONTEND_PATH, "index.html"));
   });
-});
 
-// Socket.IO connection handling
+} else {
+  console.log("⚠️ No React build found at backend/build. Frontend not served.");
+}
+
+// ====================== SOCKET.IO LOGIC ======================
 const connectedUsers = new Map();
 
-io.on('connection', (socket) => {
-  console.log(`✅ User connected: ${socket.id}`);
+io.on("connection", (socket) => {
+  console.log(`🔌 User connected: ${socket.id}`);
 
-  // User joins
-  socket.on('user-online', async (userId) => {
-    connectedUsers.set(userId, socket.id);
-    socket.userId = userId;
+  socket.on("user-online", async (userId) => {
+    try {
+      socket.userId = userId;
+      connectedUsers.set(userId, socket.id);
 
-    // Update user status
-    await User.findByIdAndUpdate(userId, {
-      isOnline: true,
-      lastSeen: new Date()
-    });
+      await User.findByIdAndUpdate(userId, {
+        isOnline: true,
+        lastSeen: new Date()
+      });
 
-    // Broadcast online status
-    io.emit('user-status-changed', { userId, isOnline: true });
-    console.log(`👤 User ${userId} is online`);
+      io.emit("user-status-changed", { userId, isOnline: true });
+    } catch (err) {
+      console.error(err);
+    }
   });
 
-  // Private message
-  socket.on('send-message', async (data) => {
+  socket.on("send-message", async (data) => {
     try {
       const { senderId, receiverId, content, messageType, fileUrl } = data;
 
-      // Save message to database
       const message = await Message.create({
         sender: senderId,
         receiver: receiverId,
         content,
-        messageType: messageType || 'text',
+        messageType: messageType || "text",
         fileUrl
       });
 
-      const populatedMessage = await Message.findById(message._id)
-        .populate('sender', 'name profileImage')
-        .populate('receiver', 'name profileImage');
+      const populated = await Message.findById(message._id)
+        .populate("sender", "name profileImage")
+        .populate("receiver", "name profileImage");
 
-      // Send to receiver if online
-      const receiverSocketId = connectedUsers.get(receiverId);
-      if (receiverSocketId) {
-        io.to(receiverSocketId).emit('receive-message', populatedMessage);
+      const receiverSocket = connectedUsers.get(receiverId);
+
+      if (receiverSocket) {
+        io.to(receiverSocket).emit("receive-message", populated);
       }
 
-      // Send back to sender
-      socket.emit('message-sent', populatedMessage);
-    } catch (error) {
-      console.error('Send message error:', error);
-      socket.emit('message-error', { error: error.message });
+      socket.emit("message-sent", populated);
+    } catch (err) {
+      socket.emit("message-error", { error: err.message });
     }
   });
 
-  // Typing indicator
-  socket.on('typing', (data) => {
-    const receiverSocketId = connectedUsers.get(data.receiverId);
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit('user-typing', {
-        userId: data.senderId,
-        isTyping: true
-      });
-    }
-  });
-
-  socket.on('stop-typing', (data) => {
-    const receiverSocketId = connectedUsers.get(data.receiverId);
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit('user-typing', {
-        userId: data.senderId,
-        isTyping: false
-      });
-    }
-  });
-
-  // Video call signaling
-  socket.on('call-user', (data) => {
-    const { userId, offer, roomId } = data;
-    const userSocketId = connectedUsers.get(userId);
-    
-    if (userSocketId) {
-      io.to(userSocketId).emit('incoming-call', {
-        from: socket.userId,
-        offer,
-        roomId
-      });
-    }
-  });
-
-  socket.on('answer-call', (data) => {
-    const { userId, answer } = data;
-    const userSocketId = connectedUsers.get(userId);
-    
-    if (userSocketId) {
-      io.to(userSocketId).emit('call-answered', {
-        from: socket.userId,
-        answer
-      });
-    }
-  });
-
-  socket.on('ice-candidate', (data) => {
-    const { userId, candidate } = data;
-    const userSocketId = connectedUsers.get(userId);
-    
-    if (userSocketId) {
-      io.to(userSocketId).emit('ice-candidate', {
-        from: socket.userId,
-        candidate
-      });
-    }
-  });
-
-  socket.on('end-call', (data) => {
-    const { userId } = data;
-    const userSocketId = connectedUsers.get(userId);
-    
-    if (userSocketId) {
-      io.to(userSocketId).emit('call-ended', {
-        from: socket.userId
-      });
-    }
-  });
-
-  // Join video room
-  socket.on('join-room', (roomId) => {
-    socket.join(roomId);
-    socket.to(roomId).emit('user-joined', socket.userId);
-    console.log(`👥 User ${socket.userId} joined room ${roomId}`);
-  });
-
-  socket.on('leave-room', (roomId) => {
-    socket.leave(roomId);
-    socket.to(roomId).emit('user-left', socket.userId);
-    console.log(`👋 User ${socket.userId} left room ${roomId}`);
-  });
-
-  // Chatbot
-  socket.on('chatbot-message', (data) => {
-    const { message } = data;
-    const response = getChatbotResponse(message);
-    socket.emit('chatbot-response', { response });
-  });
-
-  // Notification
-  socket.on('send-notification', (data) => {
-    const { userId, notification } = data;
-    const userSocketId = connectedUsers.get(userId);
-    
-    if (userSocketId) {
-      io.to(userSocketId).emit('new-notification', notification);
-    }
-  });
-
-  // Disconnect
-  socket.on('disconnect', async () => {
+  socket.on("disconnect", async () => {
     if (socket.userId) {
       connectedUsers.delete(socket.userId);
 
-      // Update user status
       await User.findByIdAndUpdate(socket.userId, {
         isOnline: false,
         lastSeen: new Date()
       });
 
-      // Broadcast offline status
-      io.emit('user-status-changed', { userId: socket.userId, isOnline: false });
-      console.log(`❌ User ${socket.userId} disconnected`);
+      io.emit("user-status-changed", { userId: socket.userId, isOnline: false });
     }
+    console.log(`❌ User disconnected: ${socket.id}`);
   });
 });
 
-// Simple chatbot responses
-function getChatbotResponse(message) {
-  const lowerMessage = message.toLowerCase();
-
-  if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
-    return 'Hello! How can I help you with SkillSwap today?';
-  } else if (lowerMessage.includes('how') && lowerMessage.includes('work')) {
-    return 'SkillSwap allows you to exchange skills with others. You can search for people who teach what you want to learn, request sessions, and connect via video calls!';
-  } else if (lowerMessage.includes('book') || lowerMessage.includes('session')) {
-    return 'To book a session, go to Search Users, find someone teaching the skill you want, and click "Request to Learn". Once they accept, you can schedule your session!';
-  } else if (lowerMessage.includes('video') || lowerMessage.includes('call')) {
-    return 'Video calls are available for accepted sessions. Once a session is active, you\'ll see a "Start Video Call" button. Make sure you\'ve granted camera and microphone permissions!';
-  } else if (lowerMessage.includes('points') || lowerMessage.includes('rewards')) {
-    return 'You earn points by teaching sessions. Points can be used to unlock sessions with expert teachers. Check the leaderboard to see top teachers!';
-  } else if (lowerMessage.includes('quiz')) {
-    return 'Take quizzes to test your knowledge in different skills. You can find quizzes in the Quizzes section. Pass with 70% or higher!';
-  } else {
-    return 'I\'m here to help! You can ask me about how SkillSwap works, booking sessions, video calls, points, or quizzes.';
-  }
-}
-
-// Error handling middleware
+// ====================== ERROR HANDLING ======================
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    success: false,
-    message: err.message || 'Server Error'
-  });
+  console.error("❌ ERROR:", err.stack);
+  res.status(500).json({ success: false, message: err.message });
 });
 
+// ====================== START SERVER ======================
 const PORT = process.env.PORT || 5000;
-
 httpServer.listen(PORT, () => {
   console.log(`
-  ╔═══════════════════════════════════════╗
-  ║   🚀 SkillSwap Server Running        ║
-  ║   📡 Port: ${PORT}                      ║
-  ║   🌍 Environment: ${process.env.NODE_ENV || 'development'}    ║
-  ║   💾 Database: Connected              ║
-  ║   ⚡ Socket.IO: Active                 ║
-  ╚═══════════════════════════════════════╝
-  `);
+╔═════════════════════════════════════╗
+║    🚀 SkillSwap Server Running      ║
+║    🌍 Port: ${PORT}                     ║
+║    💾 MongoDB Connected             ║
+║    ⚡ Socket.IO Active              ║
+╚═════════════════════════════════════╝
+`);
 });
 
 export default app;
