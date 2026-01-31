@@ -153,8 +153,14 @@ app.use((err, req, res, next) => {
 
 // ====================== START SERVER ======================
 const PORT = process.env.PORT || 5000;
-httpServer.listen(PORT, () => {
-  console.log(`
+
+const startServer = async () => {
+  try {
+    // Connect to DataBase first
+    await connectDB();
+
+    httpServer.listen(PORT, () => {
+      console.log(`
 ╔═════════════════════════════════════╗
 ║    🚀 SkillSwap Server Running      ║
 ║    🌍 Port: ${PORT}                     ║
@@ -162,6 +168,13 @@ httpServer.listen(PORT, () => {
 ║    ⚡ Socket.IO Active              ║
 ╚═════════════════════════════════════╝
 `);
-});
+    });
+  } catch (error) {
+    console.error("Failed to connect to DB, server not started:", error.message);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 export default app;
