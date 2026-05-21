@@ -1,13 +1,13 @@
 import { io } from 'socket.io-client';
 
 const getSocketUrl = () => {
-  if (process.env.NODE_ENV === 'production' || window.location.hostname !== 'localhost') {
+  if (window.location.hostname !== 'localhost') {
     return window.location.origin;
   }
-  return 'http://localhost:5000';
+  return process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
 };
 
-const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || getSocketUrl();
+const SOCKET_URL = getSocketUrl();
 
 class SocketService {
   constructor() {
