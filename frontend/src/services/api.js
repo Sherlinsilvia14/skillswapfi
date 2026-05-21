@@ -1,8 +1,13 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://skillswap-h2w5.onrender.com/api';
+const getApiUrl = () => {
+  if (process.env.NODE_ENV === 'production' || window.location.hostname !== 'localhost') {
+    return '/api';
+  }
+  return 'http://localhost:5000/api';
+};
 
-
+const API_URL = process.env.REACT_APP_API_URL || getApiUrl();
 
 // Create axios instance
 const api = axios.create({
