@@ -67,10 +67,8 @@ const OnboardingStep3 = ({ onboardingData, setOnboardingData, setUser }) => {
       const updatedUser = response.data.data;
 
       // Update user in localStorage
-      const storedUser = JSON.parse(localStorage.getItem('user'));
-      const newUser = { ...storedUser, completedOnboarding: true };
-      localStorage.setItem('user', JSON.stringify(newUser));
-      setUser(newUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
 
       showToast('Onboarding completed successfully!', 'success');
       navigate('/dashboard');
