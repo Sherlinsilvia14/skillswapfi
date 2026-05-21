@@ -15,13 +15,14 @@ const Notifications = ({ user }) => {
     
     // Setup socket
     socketService.connect(user._id);
-    socketService.onNewNotification((notification) => {
+    const handleNewNotification = (notification) => {
       setNotifications(prev => [notification, ...prev]);
-      showToast(notification.message, 'info');
-    });
+    };
+
+    socketService.onNewNotification(handleNewNotification);
 
     return () => {
-      socketService.removeAllListeners();
+      socketService.socket?.off('new-notification', handleNewNotification);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?._id]);

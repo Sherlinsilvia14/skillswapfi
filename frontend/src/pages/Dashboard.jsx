@@ -10,6 +10,8 @@ import Quizzes from '../components/Quizzes';
 import Courses from '../components/Courses';
 import Leaderboard from '../components/Leaderboard';
 import Notifications from '../components/Notifications';
+import socketService from '../services/socket';
+import { showToast } from '../utils/helpers';
 import './Dashboard.css';
 
 const Dashboard = ({ user, setUser }) => {
@@ -25,6 +27,22 @@ const Dashboard = ({ user, setUser }) => {
       isMounted.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!userData?._id) return;
+
+    socketService.connect(userData._id);
+
+    const handleNewNotification = (notification) => {
+      showToast(notification.message, 'info');
+    };
+
+    socketService.onNewNotification(handleNewNotification);
+
+    return () => {
+      socketService.socket?.off('new-notification', handleNewNotification);
+    };
+  }, [userData?._id]);
 
   useEffect(() => {
     // Absolutely only fetch once

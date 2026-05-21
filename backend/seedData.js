@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import Quiz from './models/Quiz.js';
 import Course from './models/Course.js';
+import User from './models/User.js';
 
 dotenv.config();
 
@@ -14,6 +15,81 @@ const connectDB = async () => {
     process.exit(1);
   }
 };
+
+const sampleUsers = [
+  {
+    name: 'Alice Smith',
+    email: 'alice@test.com',
+    password: 'password123',
+    contactNumber: '1234567890',
+    city: 'New York',
+    profileImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+    bio: 'Frontend developer with 5+ years of experience. Love teaching React and JavaScript!',
+    skillsToLearn: ['Python', 'Machine Learning'],
+    skillsToTeach: ['JavaScript', 'React', 'UI/UX Design'],
+    schedule: {
+      timePreferences: ['Morning', 'Evening'],
+      daysOfWeek: ['Monday', 'Wednesday', 'Friday']
+    },
+    completedOnboarding: true,
+    stats: {
+      totalHoursTaught: 35,
+      totalHoursLearned: 10,
+      rating: 4.8,
+      totalRatings: 8,
+      points: 350
+    },
+    level: 'Intermediate'
+  },
+  {
+    name: 'Bob Jones',
+    email: 'bob@test.com',
+    password: 'password123',
+    contactNumber: '9876543210',
+    city: 'San Francisco',
+    profileImage: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+    bio: "Python enthusiast, data scientist, and tech mentor. Let's swap some knowledge!",
+    skillsToLearn: ['React', 'UI/UX Design'],
+    skillsToTeach: ['Python', 'Machine Learning', 'Data Science'],
+    schedule: {
+      timePreferences: ['Evening', 'Night'],
+      daysOfWeek: ['Tuesday', 'Thursday', 'Saturday']
+    },
+    completedOnboarding: true,
+    stats: {
+      totalHoursTaught: 60,
+      totalHoursLearned: 15,
+      rating: 4.9,
+      totalRatings: 12,
+      points: 600
+    },
+    level: 'Expert'
+  },
+  {
+    name: 'Charlie Brown',
+    email: 'charlie@test.com',
+    password: 'password123',
+    contactNumber: '5551234567',
+    city: 'New York',
+    profileImage: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+    bio: 'Public speaker and communication coach. Here to help you master presentation and interview skills!',
+    skillsToLearn: ['Web Development', 'Python'],
+    skillsToTeach: ['Communication', 'Leadership', 'Public Speaking'],
+    schedule: {
+      timePreferences: ['Afternoon', 'Evening'],
+      daysOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday']
+    },
+    completedOnboarding: true,
+    stats: {
+      totalHoursTaught: 15,
+      totalHoursLearned: 5,
+      rating: 4.5,
+      totalRatings: 4,
+      points: 150
+    },
+    level: 'Beginner'
+  }
+];
 
 const sampleQuizzes = [
   {
@@ -283,12 +359,67 @@ const seedQuizzes = async () => {
   }
 };
 
+const seedUsersAndCourses = async () => {
+  try {
+    // 1. Clean existing test users
+    await User.deleteMany({ email: { $in: ['alice@test.com', 'bob@test.com', 'charlie@test.com'] } });
+    console.log('🗑️  Cleared existing sample users');
+
+    // 2. Insert new sample users (User.create runs save hooks to hash passwords)
+    const createdUsers = await User.create(sampleUsers);
+    console.log('✅ Sample users created successfully!');
+
+    // Find instructors
+    const alice = createdUsers.find(u => u.email === 'alice@test.com');
+    const bob = createdUsers.find(u => u.email === 'bob@test.com');
+
+    // 3. Clean existing courses
+    await Course.deleteMany({});
+    console.log('🗑️  Cleared existing courses');
+
+    // 4. Create sample courses
+    const sampleCourses = [
+      {
+        title: 'React for Beginners',
+        description: 'Learn the fundamentals of React, including components, props, state, and hooks.',
+        instructor: alice._id,
+        skill: 'React',
+        level: 'beginner',
+        content: [
+          { type: 'video', title: 'Introduction to React', duration: 15 },
+          { type: 'document', title: 'Setting up your development environment' },
+          { type: 'video', title: 'Understanding JSX', duration: 20 }
+        ]
+      },
+      {
+        title: 'Python Data Science Masterclass',
+        description: 'Dive deep into Python, NumPy, Pandas, and Matplotlib for data analysis and visualization.',
+        instructor: bob._id,
+        skill: 'Python',
+        level: 'intermediate',
+        content: [
+          { type: 'video', title: 'Python Basics Recap', duration: 30 },
+          { type: 'video', title: 'Introduction to Pandas', duration: 45 },
+          { type: 'document', title: 'Pandas cheatsheet' }
+        ]
+      }
+    ];
+
+    await Course.insertMany(sampleCourses);
+    console.log('✅ Sample courses added successfully!');
+
+  } catch (error) {
+    console.error('❌ Error seeding users and courses:', error);
+  }
+};
+
 const runSeed = async () => {
   await connectDB();
   await seedQuizzes();
+  await seedUsersAndCourses();
   
   console.log('\n✨ Seeding complete!');
-  console.log('You can now take quizzes in the application.');
+  console.log('You can now search for users and take quizzes in the application.');
   
   process.exit(0);
 };

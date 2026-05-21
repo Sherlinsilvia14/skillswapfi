@@ -16,11 +16,6 @@ const Chat = ({ user, selectedChatUser }) => {
 
   useEffect(() => {
     fetchConversations();
-    setupSocket();
-
-    return () => {
-      socketService.removeAllListeners();
-    };
   }, []);
 
   useEffect(() => {
@@ -42,25 +37,27 @@ const Chat = ({ user, selectedChatUser }) => {
     scrollToBottom();
   }, [messages]);
 
-  const setupSocket = () => {
+  useEffect(() => {
+    if (!user?._id) return;
+
     socketService.connect(user._id);
 
-    socketService.onReceiveMessage((message) => {
+    const handleReceiveMessage = (message) => {
       if (selectedUser && 
           (message.sender._id === selectedUser._id || message.receiver._id === selectedUser._id)) {
         setMessages(prev => [...prev, message]);
         markAsRead(message.sender._id);
       }
       fetchConversations();
-    });
+    };
 
-    socketService.onUserTyping((data) => {
+    const handleUserTyping = (data) => {
       if (selectedUser && data.userId === selectedUser._id) {
         setIsTyping(data.isTyping);
       }
-    });
+    };
 
-    socketService.onChatbotResponse((data) => {
+    const handleChatbotResponse = (data) => {
       const botMessage = {
         sender: { name: 'SkillBot', profileImage: null },
         content: data.response,
@@ -68,8 +65,18 @@ const Chat = ({ user, selectedChatUser }) => {
         isBot: true
       };
       setMessages(prev => [...prev, botMessage]);
-    });
-  };
+    };
+
+    socketService.onReceiveMessage(handleReceiveMessage);
+    socketService.onUserTyping(handleUserTyping);
+    socketService.onChatbotResponse(handleChatbotResponse);
+
+    return () => {
+      socketService.socket?.off('receive-message', handleReceiveMessage);
+      socketService.socket?.off('user-typing', handleUserTyping);
+      socketService.socket?.off('chatbot-response', handleChatbotResponse);
+    };
+  }, [user?._id, selectedUser]);
 
   const fetchConversations = async () => {
     try {

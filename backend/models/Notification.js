@@ -38,6 +38,24 @@ const notificationSchema = new mongoose.Schema({
   timestamps: true
 });
 
+notificationSchema.post('save', async function(doc) {
+  try {
+    if (global.io && global.connectedUsers) {
+      const receiverSocketId = global.connectedUsers.get(doc.user.toString());
+      if (receiverSocketId) {
+        let populated = doc;
+        if (doc.relatedUser) {
+          populated = await doc.populate('relatedUser', 'name profileImage');
+        }
+        global.io.to(receiverSocketId).emit('new-notification', populated);
+        console.log(`📡 Real-time notification sent to user ${doc.user}: ${doc.title}`);
+      }
+    }
+  } catch (error) {
+    console.error('Error sending real-time notification via socket:', error);
+  }
+});
+
 const Notification = mongoose.model('Notification', notificationSchema);
 
 export default Notification;

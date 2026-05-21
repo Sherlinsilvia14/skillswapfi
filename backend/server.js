@@ -82,6 +82,8 @@ if (fs.existsSync(FRONTEND_PATH)) {
 
 // ====================== SOCKET.IO LOGIC ======================
 const connectedUsers = new Map();
+global.io = io;
+global.connectedUsers = connectedUsers;
 
 io.on("connection", (socket) => {
   console.log(`🔌 User connected: ${socket.id}`);
@@ -125,8 +127,152 @@ io.on("connection", (socket) => {
       }
 
       socket.emit("message-sent", populated);
+
+      // 🤖 Mock User Auto-Reply Logic
+      const receiver = await User.findById(receiverId);
+      if (receiver && ['alice@test.com', 'bob@test.com', 'charlie@test.com'].includes(receiver.email)) {
+        // Send a typing event first
+        setTimeout(() => {
+          socket.emit("user-typing", { userId: receiverId, isTyping: true });
+        }, 400);
+
+        setTimeout(async () => {
+          // Stop typing event
+          socket.emit("user-typing", { userId: receiverId, isTyping: false });
+
+          let replyContent = `Hey! Thanks for messaging me. I'm a seeded tutor on SkillSwap. Feel free to request a learning session with me via the Search tab, and we can test the WebRTC video calling!`;
+          const msg = content.toLowerCase();
+          
+          if (receiver.email === 'alice@test.com') {
+            if (msg.includes('react') || msg.includes('javascript') || msg.includes('js') || msg.includes('frontend')) {
+              replyContent = `Hi! I saw you are interested in React/JavaScript. I can definitely help you with that! Just request a session with me from the 'Search Users' page.`;
+            } else if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
+              replyContent = `Hello there! I am Alice, a frontend developer. How can I help you with web development today?`;
+            }
+          } else if (receiver.email === 'bob@test.com') {
+            if (msg.includes('python') || msg.includes('data science') || msg.includes('machine learning') || msg.includes('ml')) {
+              replyContent = `Hey! Python and Data Science are my specialties. Let's do a swap! Request a session and let's get started.`;
+            } else if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
+              replyContent = `Hey! I'm Bob, a data scientist. Ready to learn some Python?`;
+            }
+          } else if (receiver.email === 'charlie@test.com') {
+            if (msg.includes('communication') || msg.includes('leadership') || msg.includes('speaking')) {
+              replyContent = `Hi! Soft skills are extremely important. I can help you with public speaking and mock interviews. Request a session on my profile!`;
+            } else if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
+              replyContent = `Hello! Charlie here, communication coach. How can I help you improve your speaking today?`;
+            }
+          }
+
+          // Create the auto-reply message in DB
+          const replyMessage = await Message.create({
+            sender: receiverId,
+            receiver: senderId,
+            content: replyContent,
+            messageType: "text"
+          });
+
+          const populatedReply = await Message.findById(replyMessage._id)
+            .populate("sender", "name profileImage")
+            .populate("receiver", "name profileImage");
+
+          // Send to the user's socket
+          socket.emit("receive-message", populatedReply);
+        }, 1800); // 1.8 seconds delay to feel realistic
+      }
+
     } catch (err) {
       socket.emit("message-error", { error: err.message });
+    }
+  });
+
+  // 📝 Typing status handlers
+  socket.on("typing", (data) => {
+    const { receiverId, senderId } = data;
+    const receiverSocket = connectedUsers.get(receiverId);
+    if (receiverSocket) {
+      io.to(receiverSocket).emit("user-typing", { userId: senderId, isTyping: true });
+    }
+  });
+
+  socket.on("stop-typing", (data) => {
+    const { receiverId, senderId } = data;
+    const receiverSocket = connectedUsers.get(receiverId);
+    if (receiverSocket) {
+      io.to(receiverSocket).emit("user-typing", { userId: senderId, isTyping: false });
+    }
+  });
+
+  // 🤖 AI Chatbot handler
+  socket.on("chatbot-message", async (data) => {
+    try {
+      const { message } = data;
+      let response = "I'm here to help you swap skills! Ask me about search, booking sessions, quizzes, or video calls.";
+      const msg = message.toLowerCase();
+      
+      if (msg.includes("hello") || msg.includes("hi") || msg.includes("hey")) {
+        response = "Hello! I'm SkillBot, your learning companion. How can I help you today?";
+      } else if (msg.includes("search") || msg.includes("find")) {
+        response = "You can search for people by clicking 'Search Users' in the sidebar. You can filter by skill, city, and availability to find the perfect learning partner!";
+      } else if (msg.includes("session") || msg.includes("book") || msg.includes("request")) {
+        response = "To book a session, find a user on the Search page and click 'Request to Learn'. Once they accept, it will appear under 'Sessions' where you can start a WebRTC video call.";
+      } else if (msg.includes("video") || msg.includes("call") || msg.includes("webrtc")) {
+        response = "Once a session is accepted, both users can join a WebRTC video call. You'll find the join button in the 'Sessions' tab. Video calls feature screen sharing and notes!";
+      } else if (msg.includes("quiz") || msg.includes("test")) {
+        response = "Test your skills with quizzes! Click 'Quizzes' in the sidebar, select a skill like JavaScript or Python, and submit your answers to see your score.";
+      } else if (msg.includes("course")) {
+        response = "Under the 'Courses' tab, you can view structured learning content created by experts and track your progress as you learn!";
+      }
+
+      setTimeout(() => {
+        socket.emit("chatbot-response", { response });
+      }, 800);
+    } catch (err) {
+      console.error("Chatbot error:", err);
+    }
+  });
+
+  // 🎥 WebRTC Signaling handlers
+  socket.on("call-user", (data) => {
+    const { userId, offer, roomId } = data;
+    const receiverSocket = connectedUsers.get(userId);
+    if (receiverSocket) {
+      io.to(receiverSocket).emit("incoming-call", {
+        from: socket.userId,
+        offer,
+        roomId
+      });
+    }
+  });
+
+  socket.on("answer-call", (data) => {
+    const { userId, answer } = data;
+    const receiverSocket = connectedUsers.get(userId);
+    if (receiverSocket) {
+      io.to(receiverSocket).emit("call-answered", {
+        from: socket.userId,
+        answer
+      });
+    }
+  });
+
+  socket.on("ice-candidate", (data) => {
+    const { userId, candidate } = data;
+    const receiverSocket = connectedUsers.get(userId);
+    if (receiverSocket) {
+      io.to(receiverSocket).emit("ice-candidate", {
+        from: socket.userId,
+        candidate
+      });
+    }
+  });
+
+  socket.on("end-call", (data) => {
+    const { userId } = data;
+    const receiverSocket = connectedUsers.get(userId);
+    if (receiverSocket) {
+      io.to(receiverSocket).emit("call-ended", {
+        from: socket.userId
+      });
     }
   });
 
