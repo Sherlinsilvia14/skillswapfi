@@ -7,7 +7,8 @@ export const protect = async (req, res, next) => {
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
       token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const secret = process.env.JWT_SECRET || 'skillswap_default_jwt_secret_key_change_in_production';
+      const decoded = jwt.verify(token, secret);
       req.user = await User.findById(decoded.id).select('-password');
       
       if (!req.user) {
