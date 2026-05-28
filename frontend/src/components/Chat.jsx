@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { messageAPI } from '../services/api';
 import socketService from '../services/socket';
 import { showToast, timeAgo, getInitials } from '../utils/helpers';
@@ -14,9 +14,27 @@ const Chat = ({ user, selectedChatUser }) => {
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
+  const fetchConversations = useCallback(async () => {
+    try {
+      const response = await messageAPI.getConversations();
+      setConversations(response.data.data);
+    } catch (error) {
+      console.error('Failed to fetch conversations:', error);
+    }
+  }, []);
+
+  const markAsRead = useCallback(async (userId) => {
+    try {
+      await messageAPI.markAsRead(userId);
+      fetchConversations();
+    } catch (error) {
+      console.error('Failed to mark as read:', error);
+    }
+  }, [fetchConversations]);
+
   useEffect(() => {
     fetchConversations();
-  }, []);
+  }, [fetchConversations]);
 
   useEffect(() => {
     // If a chat user is passed from parent (from Search page), select them
@@ -31,7 +49,7 @@ const Chat = ({ user, selectedChatUser }) => {
       fetchMessages(selectedUser._id);
       markAsRead(selectedUser._id);
     }
-  }, [selectedUser]);
+  }, [selectedUser, markAsRead]);
 
   useEffect(() => {
     scrollToBottom();
@@ -76,16 +94,7 @@ const Chat = ({ user, selectedChatUser }) => {
       socketService.socket?.off('user-typing', handleUserTyping);
       socketService.socket?.off('chatbot-response', handleChatbotResponse);
     };
-  }, [user?._id, selectedUser]);
-
-  const fetchConversations = async () => {
-    try {
-      const response = await messageAPI.getConversations();
-      setConversations(response.data.data);
-    } catch (error) {
-      console.error('Failed to fetch conversations:', error);
-    }
-  };
+  }, [user?._id, selectedUser, markAsRead, fetchConversations]);
 
   const fetchMessages = async (userId) => {
     try {
@@ -94,15 +103,6 @@ const Chat = ({ user, selectedChatUser }) => {
     } catch (error) {
       console.error('Failed to fetch messages:', error);
       showToast('Failed to load messages', 'error');
-    }
-  };
-
-  const markAsRead = async (userId) => {
-    try {
-      await messageAPI.markAsRead(userId);
-      fetchConversations();
-    } catch (error) {
-      console.error('Failed to mark as read:', error);
     }
   };
 

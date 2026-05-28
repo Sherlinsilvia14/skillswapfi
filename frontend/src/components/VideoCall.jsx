@@ -4,7 +4,6 @@ import { showToast } from '../utils/helpers';
 import './VideoCall.css';
 
 const VideoCall = ({ session, user, onEndCall, onComplete }) => {
-  const [isCallActive, setIsCallActive] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
@@ -86,7 +85,6 @@ const VideoCall = ({ session, user, onEndCall, onComplete }) => {
 
       // Setup WebRTC
       setupWebRTC(stream);
-      setIsCallActive(true);
       showToast('Call started successfully!', 'success');
     } catch (error) {
       console.error('Failed to initialize call:', error);

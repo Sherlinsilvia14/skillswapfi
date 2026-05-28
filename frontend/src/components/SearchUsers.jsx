@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { userAPI, sessionAPI, messageAPI } from '../services/api';
+import React, { useState, useEffect, useCallback } from 'react';
+import { userAPI, sessionAPI } from '../services/api';
 import { showToast, getInitials } from '../utils/helpers';
 import { allSkills, timePreferences, daysOfWeek } from '../utils/skillsData';
 import './SearchUsers.css';
@@ -16,11 +16,7 @@ const SearchUsers = ({ user, onStartChat }) => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [requestNote, setRequestNote] = useState('');
 
-  useEffect(() => {
-    searchUsers();
-  }, []);
-
-  const searchUsers = async () => {
+  const searchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const response = await userAPI.searchUsers(filters);
@@ -31,7 +27,11 @@ const SearchUsers = ({ user, onStartChat }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    searchUsers();
+  }, [searchUsers]);
 
   const handleFilterChange = (e) => {
     setFilters({
