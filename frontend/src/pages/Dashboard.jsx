@@ -65,11 +65,13 @@ const Dashboard = ({ user, setUser }) => {
           localStorage.setItem('user', JSON.stringify(response.data.data));
         }
       } catch (error) {
-        console.error('Failed to fetch user data:', error);
+        console.error('Failed to fetch user data:', error.response?.data || error.message || error);
         if (error.response?.status === 401) {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
-          window.location.href = '/login';
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
         }
       } finally {
         if (isMounted.current) {
