@@ -67,9 +67,12 @@ cp .env.example .env
 ```
 MONGODB_URI=mongodb://localhost:27017/skillswap
 JWT_SECRET=your_secret_key
+JWT_EXPIRE=7d
 EMAIL_USER=your_email@gmail.com
 EMAIL_PASS=your_app_password
 ```
+
+> Note: `JWT_EXPIRE` should be a valid non-zero duration like `7d`, `14d`, or `12h`. Values like `0`, `0s`, or `0h` will make issued tokens expire immediately.
 
 5. Start the server:
 ```bash

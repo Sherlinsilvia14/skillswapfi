@@ -51,6 +51,8 @@ NODE_ENV=development
 FRONTEND_URL=http://localhost:3000
 ```
 
+> Note: `JWT_EXPIRE` must be a valid non-zero duration like `7d`, `14d`, or `12h`. Values such as `0`, `0s`, or `0h` will cause tokens to expire immediately.
+
 **For Email Features (Optional):**
 To enable email notifications, update these values in `.env`:
 ```
